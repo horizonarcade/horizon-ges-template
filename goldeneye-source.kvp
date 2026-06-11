@@ -1,6 +1,6 @@
 Meta.DisplayName=GoldenEye: Source
 Meta.Description=GoldenEye: Source Dedicated Server (runs the Windows srcds.exe under Wine + Xvfb on Linux)
-Meta.OS=
+Meta.OS=Windows, Linux
 Meta.AarchSupport=NotSupported
 Meta.Arch=x86_64
 Meta.Author=Horizon Arcade
