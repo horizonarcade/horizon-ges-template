@@ -8,7 +8,8 @@ the `gesource` mod automatically from ModDB.
 ## Install
 
 In AMP: **Configuration → Instance Deployment → Add → Configuration Repository**, enter
-`YOURUSER/YOURREPO:main`, click **Fetch**, refresh, then **Create Instance → GoldenEye: Source**.
+`horizonarcade/horizon-ges-template:main`, click **Fetch**, refresh, then
+**Create Instance → GoldenEye: Source**.
 
 Create the instance **with Docker** (it uses `cubecoders/ampbase:wine-stable`), then **Update** and
 **Start**. See the project's `DEPLOYMENT.md` for ports, configuration, and gameplay rotation.
