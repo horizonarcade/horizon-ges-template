@@ -1,0 +1,88 @@
+[
+    {
+        "UpdateStageName": "SteamCMD - Source 2007 Dedicated Server (App 310, Windows depot)",
+        "UpdateSourcePlatform": "All",
+        "UpdateSource": "SteamCMD",
+        "UpdateSourceData": "310",
+        "ForceDownloadPlatform": "Windows",
+        "SkipOnFailure": false
+    },
+    {
+        "UpdateStageName": "Initialise Wine prefix",
+        "UpdateSourcePlatform": "Linux",
+        "UpdateSource": "Executable",
+        "UpdateSourceData": "/bin/bash",
+        "UpdateSourceArgs": "-c \"if [ ! -f \\\"{{$FullRootDir}}.wine/system.reg\\\" ]; then WINEPREFIX=\\\"{{$FullRootDir}}.wine\\\" WINEARCH=win64 WINEDEBUG=-all /usr/bin/wineboot --init; fi\"",
+        "SkipOnFailure": false
+    },
+    {
+        "UpdateStageName": "Download gesource mod archive from custom URL",
+        "UpdateSourcePlatform": "All",
+        "UpdateSource": "FetchURL",
+        "UpdateSourceData": "{{ModDownloadURL}}",
+        "UpdateSourceArgs": "gesource_mod.archive",
+        "UpdateSourceTarget": "{{$FullBaseDir}}",
+        "OverwriteExistingFiles": true,
+        "UpdateSourceConditionSetting": "ModAutoInstall",
+        "UpdateSourceConditionValue": "url",
+        "SkipOnFailure": true
+    },
+    {
+        "UpdateStageName": "Extract gesource mod archive from custom URL",
+        "UpdateSourcePlatform": "All",
+        "UpdateSource": "ExtractArchive",
+        "UpdateSourceData": "gesource_mod.archive",
+        "UpdateSourceTarget": "{{$FullBaseDir}}",
+        "OverwriteExistingFiles": true,
+        "DeleteAfterExtract": true,
+        "UpdateSourceConditionSetting": "ModAutoInstall",
+        "UpdateSourceConditionValue": "url",
+        "SkipOnFailure": true
+    },
+    {
+        "UpdateStageName": "Write ModDB auto-install script",
+        "UpdateSourcePlatform": "Linux",
+        "UpdateSource": "CreateFile",
+        "UpdateSourceData": "#!/bin/bash\n# Auto-fetch GoldenEye: Source server package from ModDB and install the gesource mod.\nset -uo pipefail\nUA=\"Mozilla/5.0 (X11; Linux x86_64) Firefox/123.0\"\nID=\"{{ModDBDownloadID}}\"\nWANT_SHA=\"{{ModDBSHA256}}\"\nBASE=\"{{$FullBaseDir}}\"\nSTART=\"https://www.moddb.com/downloads/start/$ID\"\nARC=\"${BASE}ges_dl.7z\"\n\necho \"[GES] Resolving ModDB mirror for download $ID\"\nMIRROR=$(wget -qO- --user-agent=\"$UA\" \"$START\" | grep -oE \"/downloads/mirror/$ID/[0-9]+/[0-9a-f]+\" | head -1)\nif [ -z \"$MIRROR\" ]; then\n  echo \"[GES] ERROR: no mirror link found on ModDB (layout changed or wrong download ID)\"; exit 1\nfi\n\necho \"[GES] Downloading https://www.moddb.com$MIRROR\"\nwget -q --user-agent=\"$UA\" --referer=\"$START\" -O \"$ARC\" \"https://www.moddb.com$MIRROR\" || { echo \"[GES] ERROR: download failed\"; exit 1; }\nSZ=$(stat -c%s \"$ARC\" 2>/dev/null || echo 0)\necho \"[GES] Downloaded $SZ bytes\"\nif [ \"$SZ\" -lt 100000000 ]; then echo \"[GES] ERROR: archive too small ($SZ bytes), aborting\"; rm -f \"$ARC\"; exit 1; fi\n\n# Optional integrity check: only runs if a SHA256 is configured\nif [ -n \"$WANT_SHA\" ]; then\n  echo \"[GES] Verifying SHA256\"\n  GOT_SHA=$(sha256sum \"$ARC\" | awk '{print $1}')\n  WANT_SHA_LC=$(printf '%s' \"$WANT_SHA\" | tr 'A-Z' 'a-z' | tr -d '[:space:]')\n  if [ \"$GOT_SHA\" != \"$WANT_SHA_LC\" ]; then\n    echo \"[GES] ERROR: SHA256 mismatch\"\n    echo \"[GES]   expected: $WANT_SHA_LC\"\n    echo \"[GES]   actual:   $GOT_SHA\"\n    rm -f \"$ARC\"; exit 1\n  fi\n  echo \"[GES] SHA256 verified OK\"\nelse\n  echo \"[GES] No SHA256 configured, skipping integrity check\"\nfi\n\nSEVENZIP=\"\"\nfor c in 7z 7za 7zz 7zr; do\n  if command -v \"$c\" >/dev/null 2>&1; then SEVENZIP=\"$c\"; break; fi\ndone\ncd \"$BASE\" || exit 1\nif [ -n \"$SEVENZIP\" ]; then\n  echo \"[GES] Extracting with $SEVENZIP\"\n  \"$SEVENZIP\" x -y \"$ARC\" >/dev/null || { echo \"[GES] ERROR: 7z extract failed\"; exit 1; }\nelif command -v bsdtar >/dev/null 2>&1; then\n  echo \"[GES] Extracting with bsdtar\"\n  bsdtar -xf \"$ARC\" || { echo \"[GES] ERROR: bsdtar extract failed\"; exit 1; }\nelse\n  echo \"[GES] ERROR: no 7z extractor available. Add p7zip-full to the container packages.\"; exit 1\nfi\n\n# Verified layout: the v5.0.6 archive has gesource/ at its root, so it extracts to ${BASE}gesource.\n# Fallback relocation in case a future build nests it.\nif [ ! -d \"${BASE}gesource\" ]; then\n  FOUND=$(find \"$BASE\" -maxdepth 4 -type d -name gesource 2>/dev/null | head -1)\n  if [ -n \"$FOUND\" ]; then echo \"[GES] Relocating $FOUND -> ${BASE}gesource\"; cp -rf \"$FOUND\" \"$BASE\"; fi\nfi\nrm -f \"$ARC\"\n\nif [ -d \"${BASE}gesource\" ]; then\n  echo \"[GES] gesource installed successfully\"\nelse\n  echo \"[GES] ERROR: gesource folder not present after extraction\"; exit 1\nfi\n",
+        "UpdateSourceArgs": "{{$FullRootDir}}ges_moddb_install.sh",
+        "OverwriteExistingFiles": true,
+        "UpdateSourceConditionSetting": "ModAutoInstall",
+        "UpdateSourceConditionValue": "moddb",
+        "SkipOnFailure": false
+    },
+    {
+        "UpdateStageName": "Fetch and extract gesource from ModDB (.7z)",
+        "UpdateSourcePlatform": "Linux",
+        "UpdateSource": "Executable",
+        "UpdateSourceData": "/bin/bash",
+        "UpdateSourceArgs": "{{$FullRootDir}}ges_moddb_install.sh",
+        "UpdateSourceConditionSetting": "ModAutoInstall",
+        "UpdateSourceConditionValue": "moddb",
+        "SkipOnFailure": false
+    },
+    {
+        "UpdateStageName": "Ensure gesource/cfg directory exists",
+        "UpdateSourcePlatform": "All",
+        "UpdateSource": "CreateDirectory",
+        "UpdateSourceArgs": "{{$FullBaseDir}}gesource/cfg",
+        "SkipOnFailure": true
+    },
+    {
+        "UpdateStageName": "Write AMP-managed server.cfg (neutralises stock overrides)",
+        "UpdateSourcePlatform": "All",
+        "UpdateSource": "CreateFile",
+        "UpdateSourceData": "// gesource/cfg/server.cfg - managed by AMP, do not edit (overwritten on update).\n// AMP applies server settings (hostname, rcon, gameplay, etc.) on the command line.\n// Put your own persistent cvars in amp_user.cfg - it is preserved across updates.\nexec amp_user.cfg\n",
+        "UpdateSourceArgs": "{{$FullBaseDir}}gesource/cfg/server.cfg",
+        "OverwriteExistingFiles": true,
+        "SkipOnFailure": true
+    },
+    {
+        "UpdateStageName": "Create amp_user.cfg if missing (preserved across updates)",
+        "UpdateSourcePlatform": "All",
+        "UpdateSource": "CreateFile",
+        "UpdateSourceData": "// amp_user.cfg - your custom GoldenEye: Source cvars, one per line.\n// This file is created once and preserved across AMP updates.\n// Example:\n// mp_timelimit 20\n",
+        "UpdateSourceArgs": "{{$FullBaseDir}}gesource/cfg/amp_user.cfg",
+        "OverwriteExistingFiles": false,
+        "SkipOnFailure": true
+    }
+]
