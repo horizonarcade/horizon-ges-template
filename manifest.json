@@ -1,9 +1,9 @@
 {
-	"id": "011d6364-836a-4cac-b420-9c8c6d6d3736",
+	"id": "ec280171-c67b-4cf8-923f-dc27fea91ee1",
 	"authors": ["Horizon Arcade"],
 	"origin": "https://github.com/horizonarcade/horizon-ges-template.git",
 	"url": "https://github.com/horizonarcade/horizon-ges-template",
 	"imagefile": "",
-	"prefix": "HZA",
+	"prefix": "",
 	"repotype": "AppTemplates"
 }
