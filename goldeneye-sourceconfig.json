@@ -192,6 +192,21 @@
         }
     },
     {
+        "DisplayName": "Disable Valve Anti-Cheat (VAC)",
+        "Category": "GoldenEye Source:stadia_controller",
+        "Subcategory": "Server:dns:1",
+        "Description": "If enabled, VAC is turned OFF (the server runs with -insecure). Leave DISABLED to run VAC-secured, which is recommended for public servers and requires a working Steam connection (config.vdf).",
+        "Keywords": "vac,anti,cheat,insecure,secure",
+        "FieldName": "insecure",
+        "InputType": "checkbox",
+        "ParamFieldName": "insecure",
+        "DefaultValue": "",
+        "EnumValues": {
+            "False": "",
+            "True": "-insecure "
+        }
+    },
+    {
         "DisplayName": "Fast Download URL",
         "Category": "GoldenEye Source:stadia_controller",
         "Subcategory": "Server:dns:1",
